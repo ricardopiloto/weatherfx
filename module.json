@@ -4,8 +4,6 @@
   "title": "Weather FX",
   "description": "Weather effects for Foundry VTT with a homebrew for WFRP4e",
   "version": "1.0.0",
-  "library": "false",
-  "manifestPlusVersion": "1.2.0",
   "compatibility": {
     "minimum": "12",
     "verified": "13"
@@ -48,7 +46,7 @@
   "socket": true,
   "url": "https://github.com/ricardopiloto/weatherfx",
   "manifest": "https://github.com/ricardopiloto/weatherfx/blob/master/module.json",
-  "download": "https://github.com/LeafWulf/weatherfx/releases/download/1.0.0/weatherfx-1.0.0.zip",
+  "download": "https://github.com/ricardopiloto/weatherfx/releases/download/1.0.0/weatherfx.zip",
   "readme": "https://github.com/ricardopiloto/weatherfx/blob/master/README.md",
   "changelog": "https://github.com/ricardopiloto/weatherfx/blob/master/CHANGELOG.md",
   "media": [
