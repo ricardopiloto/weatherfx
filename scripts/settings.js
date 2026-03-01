@@ -15,9 +15,9 @@ export let linkWeatherToGI = false
 export let weatherSource = 'weather-control'
 
 export let blizzardSound = 'modules/michaelghelfi/ambience/Snowing.ogg';
-export let rainSound = 'modules/ivan-duch-music-packs/audio/rain-sfx.ogg';
+export let rainSound = 'modules/wfrp4e-night-of-blood/assets/audio/rain.mp3';
 export let thunderstormSound  = 'modules/michaelghelfi/ambience/RainandThunder.ogg';
-export let heavyRainSound = 'modules/ivan-duch-music-packs/audio/rain-sfx.ogg';
+export let heavyRainSound = 'modules/wfrp4e-night-of-blood/assets/audio/rain.mp3';
 
 export function registerSettings() {
     game.settings.register(MODULE, 'weatherSource', {

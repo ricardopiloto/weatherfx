@@ -1,6 +1,6 @@
 import { MODULE, i18nTodaysWeather } from "./const.js";
 import { removeTemperature, getKeyByVal } from "./util.js"
-import { toggleApp, weatherSource, autoApply } from "./settings.js"
+import { toggleApp, weatherSource, autoApply, linkWeatherToGI } from "./settings.js"
 import { lang, fvttVersion, weatherEffects } from "./weatherfx.js";
 import { createEffect } from "./effect.js"
 
@@ -27,9 +27,10 @@ export async function weatherControlHooks() {
                 if (message.speaker.alias == todaysWeather) {
                     let precipitation = removeTemperature(message.content)
                     await game.settings.set(MODULE, "currentWeather", precipitation);
-                    if (!linkWeatherToGI || canvas.scene.globalLight)
-                        if (autoApply & sceneAutoApply)
-                            checkWeather(precipitation)
+                    const shouldApplyForScene = !linkWeatherToGI || !!canvas.scene?.globalLight;
+                    if (shouldApplyForScene && autoApply && sceneAutoApply) {
+                        checkWeather(precipitation)
+                    }
                 }
             }
         });
@@ -98,15 +99,16 @@ export async function langJson(language = lang) {
 
 // checks the string for which weather was generated, create the effect and passes it as argument for Weather Effects function.
 export async function checkWeather(msgString) {
+    const raw = msgString != null && typeof msgString === "string" ? msgString : String(msgString ?? "");
 
     if (weatherSource === 'weather-control') {
-        // msgString = await game.settings.get("weatherfx", "currentWeather") //improve this later
         let weatherObject = await langJson();
-        let comparableString = await getKeyByVal(weatherObject, msgString)
-        let enJson = await langJson("en")
-        msgString = enJson[comparableString].toLowerCase()
+        let comparableString = await getKeyByVal(weatherObject, raw);
+        let enJson = await langJson("en");
+        const enValue = comparableString != null ? enJson[comparableString] : undefined;
+        msgString = (typeof enValue === "string" ? enValue : raw).toLowerCase();
     } else {
-        msgString = msgString.toLowerCase()
+        msgString = raw.toLowerCase();
     }
 
     if (msgString.includes('rain')) {
@@ -144,6 +146,9 @@ export async function checkWeather(msgString) {
 
     else if (msgString.includes('blizzard'))
         return weatherEffects(createEffect('blizzard'));
+
+    else if (msgString.includes('icestorm') || (msgString.includes('ice') && msgString.includes('storm')))
+        return weatherEffects(createEffect('iceStorm'));
 
     else if (msgString.includes('clear sky'))
         return weatherEffects(createEffect('clear'));

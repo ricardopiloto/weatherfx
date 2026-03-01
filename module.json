@@ -3,14 +3,12 @@
   "id": "weatherfx",
   "title": "Weather FX",
   "description": "Weather effects for Foundry VTT with a homebrew for D&D 5e",
-  "version": "This is auto replaced",
+  "version": "1.0.0",
   "library": "false",
   "manifestPlusVersion": "1.2.0",
-  "minimumCoreVersion": "9",
-  "compatibleCoreVersion": "10",
   "compatibility": {
-    "minimum": "9",
-    "verified": "10"
+    "minimum": "12",
+    "verified": "13"
   },
   "authors": [
     {
@@ -24,10 +22,13 @@
   "relationships": {
     "systems": [],
     "requires": [
-    {
+      {
         "id": "fxmaster",
         "type": "module",
-        "compatibility": {}
+        "compatibility": {
+          "minimum": "7.4.1",
+          "verified": "7.4.1"
+        }
       }
     ]
   },
@@ -48,9 +49,9 @@
     }
   ],
   "socket": true,
-  "url": "This is auto replaced",
-  "manifest": "This is auto replaced",
-  "download": "This is auto replaced",
+  "url": "https://github.com/LeafWulf/weatherfx",
+  "manifest": "https://github.com/LeafWulf/weatherfx/blob/main/module.json",
+  "download": "https://github.com/LeafWulf/weatherfx/releases/download/1.0.0/weatherfx-1.0.0.zip",
   "license": "https://github.com/LeafWulf/weatherfx/blob/master/LICENSE",
   "readme": "https://github.com/LeafWulf/weatherfx/blob/master/README.md",
   "changelog": "https://github.com/LeafWulf/weatherfx/blob/master/CHANGELOG.md",

@@ -25,7 +25,7 @@ Hooks.once("init", () => {
 
 // Hook that triggers when the game is ready. Check if there is a weather effect been played, then check if sound is enabled and restart the sound that should be played.
 Hooks.once('ready', async function () {
-    fvttVersion = parseInt(game.version)
+    fvttVersion = game.release?.generation ?? parseInt(game.version)
     lang = game.i18n.lang
     console.log(" ======================================== ⛈ Weather FX  ======================================== ")
     console.log(" =================================== FoundryVTT Version: ", fvttVersion, " =================================== ")
@@ -88,68 +88,62 @@ Hooks.on('smallweatherUpdate', async function (weather, hourly) {
 })
 
 // This add the control buttons so GM can control 'clear weather effects' or 'apply weather effects'
-Hooks.on("getSceneControlButtons", (controls, b, c) => {
-    controls
-        .find((c) => c.name == "token")
-        .tools.push(
-            {
-                name: "clearWeather",
-                title: "Clear Weather",
-                icon: "fas fa-sun",
-                button: true,
-                visible:
-                    game.user.isGM,
-                //  &&
-                // game.settings.get("", "enableWeatherFX"),
-                onClick: () => {
-                    clearEffects()
-                    if (weatherSource === 'smallweather')
-                        ChatMessage.create({ speaker: { alias: 'Weather FX: ' }, content: "Weather effects for: " + game.settings.get("weatherfx", "currentWeather").conditions + " <b style='color:red'>removed</b>", whisper: ChatMessage.getWhisperRecipients("GM") });
-                    else
-                        ChatMessage.create({ speaker: { alias: 'Weather FX: ' }, content: "Weather effects for: " + game.settings.get("weatherfx", "currentWeather") + " <b style='color:red'>removed</b>", whisper: ChatMessage.getWhisperRecipients("GM") });
-                },
-            },
-            {
-                name: "applyWeatherFX",
-                title: "Apply Weather FX",
-                icon: "fas fa-cloud-sun-rain",
-                button: true,
-                visible:
-                    game.user.isGM,
-                //  &&
-                // game.settings.get("", "enableWeatherFX"),
-                onClick: async () => {
-                    if (weatherSource === 'weather-control' && game.modules.get('weather-control').active) {
-                        if (!game.settings.get("weatherfx", "currentWeather"))
-                            await getPrecipitation();
-                        if (isChatOutputOn()) {
-                            let currentWeather = game.settings.get("weatherfx", "currentWeather")
-                            checkWeather(currentWeather)
-                        }
-                        else noChatOutputDialog()
-                    } else if (weatherSource === 'smallweather' && game.modules.get('smallweather').active) {
-                        await smallWeatherString(currentWeather)
-                    }
-                },
+// Foundry v13+: controls is a Record (e.g. controls.tokens), tools is a Record; use onChange, not onClick.
+Hooks.on("getSceneControlButtons", (controls) => {
+    const tokenControl = controls.tokens;
+    if (!tokenControl?.tools) return;
+    const tokenOrder = Object.keys(tokenControl.tools).length;
+    tokenControl.tools.clearWeather = {
+        name: "clearWeather",
+        title: "Clear Weather",
+        icon: "fas fa-sun",
+        order: tokenOrder,
+        button: true,
+        visible: game.user.isGM,
+        onChange: () => {
+            clearEffects();
+            if (weatherSource === 'smallweather')
+                ChatMessage.create({ speaker: { alias: 'Weather FX: ' }, content: "Weather effects for: " + game.settings.get("weatherfx", "currentWeather").conditions + " <b style='color:red'>removed</b>", whisper: ChatMessage.getWhisperRecipients("GM") });
+            else
+                ChatMessage.create({ speaker: { alias: 'Weather FX: ' }, content: "Weather effects for: " + game.settings.get("weatherfx", "currentWeather") + " <b style='color:red'>removed</b>", whisper: ChatMessage.getWhisperRecipients("GM") });
+        },
+    };
+    tokenControl.tools.applyWeatherFX = {
+        name: "applyWeatherFX",
+        title: "Apply Weather FX",
+        icon: "fas fa-cloud-sun-rain",
+        order: tokenOrder + 1,
+        button: true,
+        visible: game.user.isGM,
+        onChange: async () => {
+            if (weatherSource === 'weather-control' && game.modules.get('weather-control').active) {
+                if (!game.settings.get("weatherfx", "currentWeather"))
+                    await getPrecipitation();
+                if (isChatOutputOn()) {
+                    let currentWeather = game.settings.get("weatherfx", "currentWeather");
+                    checkWeather(currentWeather);
+                } else noChatOutputDialog();
+            } else if (weatherSource === 'smallweather' && game.modules.get('smallweather').active) {
+                await smallWeatherString(currentWeather);
             }
-        );
-    if (game.modules.get('weather-control').active)
-        controls
-            .find((c) => c.name == "notes")
-            .tools.push({
-                name: "toggle-weatherApp",
-                title: "Toggle Weather Control",
-                icon: "fas fa-cloud-sun",
-                button: true,
-                visible: game.user.isGM,
-                onClick: () => {
-                    toggleWeatherControl()
-                },
-            });
+        },
+    };
+    if (game.modules.get('weather-control')?.active && controls.notes?.tools) {
+        const notesOrder = Object.keys(controls.notes.tools).length;
+        controls.notes.tools["toggle-weatherApp"] = {
+            name: "toggle-weatherApp",
+            title: "Toggle Weather Control",
+            icon: "fas fa-cloud-sun",
+            order: notesOrder,
+            button: true,
+            visible: game.user.isGM,
+            onChange: () => toggleWeatherControl(),
+        };
+    }
 });
 
 function defaultAutoApplyFlag(scene) {
-    if (!hasProperty(scene, 'data.flags.weatherfx.auto-apply')) {
+    if (scene.getFlag('weatherfx', 'auto-apply') === undefined) {
         scene.setFlag('weatherfx', 'auto-apply', autoApply);
     }
 }
@@ -161,8 +155,7 @@ function checkSystem(system) {
 
 // This function apply weather effects to the canvas, but first cleans any effects that are currently applied.
 export async function weatherEffects(effectCondition) {
-    if (canvas.scene.getFlag("weatherfx", "isActive") !== undefined)
-        await clearEffects();
+    await clearEffects();
 
     await canvas.scene.setFlag("weatherfx", "isActive", true);
     await canvas.scene.setFlag("weatherfx", "effectCondition", effectCondition);
@@ -171,7 +164,9 @@ export async function weatherEffects(effectCondition) {
         Hooks.call(particleWeather, effectCondition.effectsArray)
 
     if (effectCondition.filtersArray.length > 0) {
-        FXMASTER.filters.setFilters(effectCondition.filtersArray)
+        effectCondition.filtersArray.forEach((f, i) => {
+            FXMASTER.filters.addFilter("weatherfx_" + i, f.type, f.options);
+        });
     }
 
     if (enableSound && effectCondition.hasSound) {
@@ -187,19 +182,25 @@ export async function weatherEffects(effectCondition) {
         return weatherRoll(effectCondition.id);
 }
 
-// remove all the current fx on the canvas, also stops all the sounds effects that matches the flag weatherfx.audio
+// Remove all current fx on the canvas and stop matching sound. Clears all FXMaster scene effects on this scene (including from other modules).
 async function clearEffects() {
-    await canvas.scene.setFlag("weatherfx", "isActive", false);
-    let effectCondition = canvas.scene.getFlag("weatherfx", "effectCondition");
+    const effectCondition = canvas.scene.getFlag("weatherfx", "effectCondition") ?? {};
+    // Clear particle effects: hook + FXMaster scene flag so API Effects list and canvas are cleared (per FXMaster README).
     Hooks.call(particleWeather, []);
+    if (canvas.scene.getFlag("fxmaster", "effects") !== undefined)
+        await canvas.scene.unsetFlag("fxmaster", "effects");
+    // Remove filters by ID so FXMaster reliably clears them (per FXMaster API: removeFilter("myfilterID"))
+    const filtersArray = effectCondition.filtersArray ?? [];
+    for (let i = 0; i < filtersArray.length; i++) {
+        try { FXMASTER.filters.removeFilter("weatherfx_" + i); } catch (_) { /* ignore if already removed */ }
+    }
     FXMASTER.filters.setFilters([]);
     if (enableSound && effectCondition.hasSound) {
-        let playlist = game.playlists.getName(playlistName);
-        let sound = playlist.sounds.getName(effectCondition.soundName);
-        if (sound) if (sound.playing) {
-            playlist.stopSound(sound);
-        }
+        const playlist = game.playlists?.getName(playlistName);
+        const sound = playlist?.sounds?.getName(effectCondition.soundName);
+        if (sound?.playing) playlist.stopSound(sound);
     }
+    await canvas.scene.setFlag("weatherfx", "isActive", false);
     if (instantApply) await instantWeather();
 }
 

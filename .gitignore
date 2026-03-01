@@ -1,3 +1,8 @@
 .vscode
 ignore
 *.lock
+.cursor/
+AGENTS.md
+openspec/changes/
+openspec/archive/
+project.md

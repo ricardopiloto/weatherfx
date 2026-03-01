@@ -1,5 +1,29 @@
 # Changelog
 
+## [2.0.0] — Fork updates (OpenSpec changes)
+
+This release reflects the fork updated for Foundry v13, FXMaster (gambit07/fxmaster), and the latest Weather Control. The following changes were implemented and tracked via OpenSpec.
+
+### Compatibility and dependencies
+- **update-foundry-v13-compat:** Updated module for Foundry VTT v13 API; manifest and runtime code aligned with v13 compatibility; scene flags and version detection updated.
+- **update-fxmaster-dependency:** Declared and validated compatibility with latest FXMaster ([gambit07/fxmaster](https://github.com/gambit07/fxmaster)); manifest and FXMaster API usage audited and updated.
+- **update-fxmaster-rain-type:** Replaced deprecated `raintop` particle type with `rain` and appropriate options across `effect.js` and `sw-fn.js` so rain effects render correctly with current FXMaster.
+- **adapt-scene-controls-foundry-v13:** Adapted scene controls to Foundry v13 `getSceneControlButtons` API (Record-based controls and tools); "Clear Weather", "Apply Weather FX", and "Toggle Weather Control" buttons now register and appear correctly for GMs.
+- **fix-weatherfx-controls-and-linkweather:** Fixed `linkWeatherToGI is not defined` runtime error and restored reliable visibility of Weather FX buttons when required modules are present.
+
+### Clear Weather and apply behaviour
+- **fix-topdown-rain-and-clear-fx:** Top-Down Rain setting is now respected for Weather Control (rain uses `topDown: topDownRain` from settings). Clear Weather removes all effects: filters applied via `addFilter` with stable IDs and cleared with `removeFilter`, particles cleared via hook and FXMaster scene flag.
+- **clear-before-apply-and-fxmaster-particles:** Weather FX always clears previous effects before applying a new one (no accumulation). Clear Weather resets FXMaster scene flag so particle effects are fully removed from the canvas and API Effects list.
+
+### Weather Control and effects
+- **fix-checkweather-undefined-tolowercase:** Fixed `TypeError: Cannot read properties of undefined (reading 'toLowerCase')` in `checkWeather()` when Weather Control message or language lookup returns undefined; safe fallback before `.toLowerCase()`.
+- **add-ice-storm-effect:** When Weather Control reports "Ice Storm" (or equivalent), Weather FX now applies an ice storm effect (heavy rain, clouds, fog, cold climate filter); new `iceStorm` case in `createEffect()` and detection in `checkWeather()`.
+
+### Documentation and tooling
+- **update-project-context:** Updated `openspec/project.md` with accurate module purpose, tech stack, dependencies, and conventions.
+
+---
+
 ## [1.5.0]
 [![Supported Foundry Versions](https://img.shields.io/endpoint?url=https://foundryshields.com/version?url=https://github.com/LeafWulf/weatherfx/releases/download/1.5.0/module.json)](https://foundryvtt.com/packages/weatherfx)  
 [![Downloads](https://img.shields.io/github/downloads/LeafWulf/weatherfx/1.5.0/module.zip?logo=github&color=238636&label=downloads)](https://github.com/LeafWulf/weatherfx/releases/1.5.0)

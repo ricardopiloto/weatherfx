@@ -108,11 +108,13 @@ async function createWeatherEffect(weather) {
     }
 
     const rainTopDown = {
-        "type": "raintop", "options": {
-            "scale": (rainScale + 0.1).toFixed(2), // this is the main variable
-            "speed": rainSpeed.toFixed(2), // this might change for stronger rains
+        "type": "rain",
+        "options": {
+            "scale": (rainScale + 0.1).toFixed(2),
+            "speed": rainSpeed.toFixed(2),
             "lifetime": 0.9,
             "density": 1,
+            "topDown": true,
             "tint": { "apply": false, "value": "#ffffff" }
         }
     }
