@@ -51,8 +51,11 @@ Hooks.on('canvasReady', async function () {
 })
 
 Hooks.on('renderSceneConfig', async (app, html) => {
-    defaultAutoApplyFlag(app.object);
-    const autoapplyCheckStatus = app.object.getFlag('weatherfx', 'auto-apply') ? 'checked' : '';
+    // v13 Scene Config may expose the document as app.document; fallback to app.object
+    const scene = app.document ?? app.object;
+    if (!scene) return;
+    defaultAutoApplyFlag(scene);
+    const autoapplyCheckStatus = scene.getFlag('weatherfx', 'auto-apply') ? 'checked' : '';
     const injection = `
     <hr>
     <style> .wfx-scene-config {
@@ -72,10 +75,16 @@ Hooks.on('renderSceneConfig', async (app, html) => {
         <p class="notes">Toggle auto-apply weather effects to the scene.</p>
       </div>
     </fieldset>`;
-    const weatherEffect = html.find('select[name="weather"]');
-    const formGroup = weatherEffect.closest(".form-group");
-    formGroup.after(injection);
-    app.setPosition({ height: "auto" });
+    // Prefer Ambience tab: after "Weather Elevation" so the block appears in Basic Options
+    const $html = html instanceof jQuery ? html : $(html);
+    const weatherElevationGroup = $html.find('label').filter((i, el) => (el.textContent || '').includes('Weather Elevation')).closest('.form-group');
+    const formGroup = weatherElevationGroup.length
+        ? weatherElevationGroup
+        : ($html.find('input[name="name"]').closest('.form-group').length
+            ? $html.find('input[name="name"]').closest('.form-group')
+            : $html.find('.form-group').first());
+    if (formGroup.length) formGroup.after(injection);
+    if (typeof app.setPosition === 'function') app.setPosition({ height: "auto" });
 })
 
 Hooks.on('smallweatherUpdate', async function (weather, hourly) {
@@ -143,6 +152,7 @@ Hooks.on("getSceneControlButtons", (controls) => {
 });
 
 function defaultAutoApplyFlag(scene) {
+    if (!scene?.getFlag) return;
     if (scene.getFlag('weatherfx', 'auto-apply') === undefined) {
         scene.setFlag('weatherfx', 'auto-apply', autoApply);
     }
