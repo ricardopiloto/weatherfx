@@ -1,6 +1,6 @@
 # Weather FX
 
-**Fork of the original [Weather FX](https://github.com/LeafWulf/weatherfx) module.** This fork was updated for compatibility with **Foundry VTT v13**, with **[FXMaster](https://github.com/gambit07/fxmaster)** (Gambit's FXMaster), and with the latest **Weather Control**. It does **not** work with SmallWeather.
+**Fork of the original [Weather FX](https://github.com/LeafWulf/weatherfx) module.** This fork targets **Foundry VTT v12–v14** (manifest `verified` on **v14**), with **[FXMaster](https://github.com/gambit07/fxmaster)** (Gambit's FXMaster), and with the latest **Weather Control**. It does **not** work with SmallWeather.
 
 This module automatically generates weather effects on the canvas (in the current scene) using the [FXMaster](https://github.com/gambit07/fxmaster) API and Weather Control weather messages.
 
@@ -9,6 +9,34 @@ This version was **adapted for [WFRP4e](https://foundryvtt.com/packages/wfrp4e)*
 
 ## Weather data and regions
 The temperature and climate data used by this module are based on the **first historical weather dataset available for Germany**. For now, the module only provides temperature/weather for **the Empire (Germany)**. Other regions are planned for future updates.
+
+**Weather FX does not roll dice or pick categories.** Those steps are performed by **[Weather Control](https://github.com/ricardopiloto/weather-control)** (with **Simple Calendar Reborn** for the current season). Weather FX reads the resulting description (e.g. from chat or settings) and drives **FXMaster** on the canvas.
+
+## Weather tables (Weather Control)
+
+The tables below mirror the **seasonal 1d100** category matrix and **temperature profiles** documented for the recommended Weather Control fork. They are reproduced here for quick reference; the [Weather Control README](https://github.com/ricardopiloto/weather-control/blob/main/README.md) remains authoritative if values change.
+
+Roll **1d100** (treat **“00” as 100**). Compare to the ranges for the active season (from the calendar when set to **Auto**, or the GM’s fixed season in Weather Control).
+
+| Category | Spring | Summer | Autumn | Winter |
+| -------- | ------ | ------ | ------ | ------ |
+| **Dry** | 01–10 | 01–40 | 01–30 | — |
+| **Fair** | 11–30 | 41–70 | 31–60 | 01–10 |
+| **Rain** | 31–90 | 71–95 | 61–90 | 11–60 |
+| **Downpour** | 91–95 | 96–00 | 91–98 | 61–65 |
+| **Snow** | 96–00 | — | 99–00 | 66–90 |
+| **Blizzard** | — | — | — | 91–00 |
+
+Daily temperature is generated around a seasonal **base** and clamped to **min–max** (°F in the module; display may use °C). Profiles are aligned with **German** seasonal reference data (**Deutscher Wetterdienst, DWD**, nationwide records from **1881**).
+
+| Season | Base (°F) | Min (°F) | Max (°F) | Approx. °C |
+| ------ | --------- | -------- | -------- | ---------- |
+| Winter | 32 | 23 | 41 | ≈ −5 to 5°C |
+| Spring | 50 | 41 | 59 | ≈ 5 to 15°C |
+| Summer | 77 | 68 | 86 | ≈ 20 to 30°C |
+| Autumn | 50 | 41 | 59 | ≈ 5 to 15°C |
+
+**Attribution:** Seasonal category table based on *Warhammer Fantasy Roleplay 4E – Enemy in Shadows Companion* style seasonal variety (via Weather Control). Temperature bands use the DWD reference described upstream.
 
 ## Functions
 With the buttons added to the controls on the right side of the screen the GM can either remove or apply Weather FX.
@@ -43,12 +71,16 @@ Weather FX can play sounds when this option is on. **Sound support is still bein
 ## Dependencies
 1. [FXMaster](https://github.com/gambit07/fxmaster) (Gambit's FXMaster; compatible with this fork)
 2. [Weather Control](https://foundryvtt.com/packages/weather-control) (latest version)
-3. **[Simple Calendar Reborn](https://foundryvtt.com/packages/simple-calendar)** — required. The module reads the current **season** from Simple Calendar Reborn and uses it to determine temperatures and weather effects.
+3. **[Simple Calendar Reborn](https://foundryvtt.com/packages/simple-calendar)** — required for the Weather Control workflow. **Weather Control** reads the current **season** from the calendar (when set to Auto) for the 1d100 table and temperature logic; Weather FX consumes its output for canvas effects.
 
 **Optional**
 1. [Ivan Duch's Music Packs](https://foundryvtt.com/packages/ivan-duch-music-packs)
 2. [Michael Ghelfi Studios Audio Pack](https://foundryvtt.com/packages/michaelghelfi)
 
+
+## Foundry v14
+
+The manifest lists **compatibility.verified: 14** (minimum **12**). Integration points were reviewed against the [Foundry v14 API](https://foundryvtt.com/api/). **After upgrading the host**, run a quick in-game check: token scene controls (apply/clear), Weather Control chat auto-apply, scene configuration **Weather FX** block, and FXMaster effects. Use **FXMaster** and **Weather Control** versions that support your Foundry generation.
 
 ## Known Issues
 - Make sure to have Weather Control output to chat **ON**

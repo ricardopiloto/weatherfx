@@ -3,10 +3,11 @@
   "id": "weatherfx",
   "title": "Weather FX",
   "description": "Weather effects for Foundry VTT with a homebrew for WFRP4e",
-  "version": "1.0.0",
+  "version": "1.1.0",
+  "type": "module",
   "compatibility": {
     "minimum": "12",
-    "verified": "13"
+    "verified": "14"
   },
   "authors": [
     {

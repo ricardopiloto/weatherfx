@@ -22,6 +22,12 @@ This release reflects the fork updated for Foundry v13, FXMaster (gambit07/fxmas
 ### Documentation and tooling
 - **update-project-context:** Updated `openspec/project.md` with accurate module purpose, tech stack, dependencies, and conventions.
 
+### Foundry v14 compatibility
+- **update-foundry-v14-compat:** `module.json` now includes `type: "module"` and **compatibility.verified: "14"** (minimum remains **12**). Runtime hooks and APIs used by this package were cross-checked against the public v14 docs; no code changes were required for the audited paths. **In-game smoke testing on a v14 world** (controls, chat auto-apply, scene config injection, FXMaster) is recommended when upgrading the host.
+
+### README weather tables
+- **add-readme-weather-tables:** README documents the **seasonal 1d100** matrix and **temperature profile** table used by Weather Control, with attribution (*Enemy in Shadows Companion* / DWD via upstream) and a clear split: Weather Control + calendar generate weather; Weather FX maps results to canvas effects.
+
 ---
 
 ## [1.5.0]
