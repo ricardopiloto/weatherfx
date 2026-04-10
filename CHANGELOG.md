@@ -28,6 +28,11 @@ This release reflects the fork updated for Foundry v13, FXMaster (gambit07/fxmas
 ### README weather tables
 - **add-readme-weather-tables:** README documents the **seasonal 1d100** matrix and **temperature profile** table used by Weather Control, with attribution (*Enemy in Shadows Companion* / DWD via upstream) and a clear split: Weather Control + calendar generate weather; Weather FX maps results to canvas effects.
 
+### Weather Control non-legacy (DSLF) messages
+- **support-weather-control-dslf-message-format:** When **`weather-control`** setting **`legacyEnemyInShadowsWeather`** is **`false`**, chat lines shaped like `<b>…°C</b> - Precipitation; Visibility; Wind` are parsed and mapped to FX (`util.js` extractors, `wc-fn.js` `dslfTripleToEffectName`). Legacy EiS-style strings remain unchanged when the setting is true or unset. README documents WFRP4e / Deft Steps, Light Fingers context.
+- **refine-dslf-wind-particle-speed:** In DSLF mode, the **wind** token scales **`options.speed`** on **fog** and **clouds** particle layers (cloned `Effect`, no mutation of shared `effect.js` definitions). README lists tier multipliers.
+- **add-dslf-clear-scattered-clouds:** DSLF **none + Clear + Still/Light** wind now applies **`scatteredClearSky`** (sparse `clouds` layer in `effect.js`) instead of empty `clear`; wind scaling still differentiates Still vs Light drift. Medium+ clear-sky wind unchanged (`partlyCloudy`).
+
 ---
 
 ## [1.5.0]

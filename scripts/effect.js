@@ -18,6 +18,7 @@ export function createEffect(effectName) {
     let effectCondition = {};
     switch (effectName) {
         case 'clear': return effectCondition = new Effect(effectName, 'clear', false, '', '', [], [])
+        case 'scatteredClearSky': return effectCondition = new Effect(effectName, 'partlyCloudy', false, '', '', [scatteredClouds], [])
         case 'fair': return effectCondition = new Effect(effectName, 'fair', false, '', '', [lightFog], [])
         case 'partlyCloudy': return effectCondition = new Effect(effectName, 'partlyCloudy', false, '', '', [moderateClouds], [])
         case 'mostlyCloudy': return effectCondition = new Effect(effectName, 'mostlyCloudy', false, '', '', [heavyClouds], [])
@@ -114,6 +115,21 @@ function getModerateRain() {
             }
         }
     };
+}
+/** Sparse clouds for DSLF: Clear visibility + Still/Light wind (speed scaled by wind tier after createEffect). */
+const scatteredClouds = {
+    "type": "clouds",
+    "options": {
+        "scale": 1.15,
+        "direction": 180,
+        "speed": 1,
+        "lifetime": 1.2,
+        "density": 0.012,
+        "tint": {
+            "apply": false,
+            "value": "#ffffff"
+        }
+    }
 }
 const moderateClouds = {
     "type": "clouds",

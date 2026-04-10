@@ -38,6 +38,28 @@ Daily temperature is generated around a seasonal **base** and clamped to **min�
 
 **Attribution:** Seasonal category table based on *Warhammer Fantasy Roleplay 4E – Enemy in Shadows Companion* style seasonal variety (via Weather Control). Temperature bands use the DWD reference described upstream.
 
+### Non-legacy chat format (WFRP4e / Deft Steps, Light Fingers)
+
+If **Weather Control** has **`legacyEnemyInShadowsWeather`** set to **`false`**, today’s weather in chat uses a compact line after the temperature, for example:
+
+`<b>20 °C</b> - None; Clear; Light`
+
+The three segments after ` - ` are **precipitation**; **visibility**; **wind** (semicolon-separated). Weather FX detects this mode via that setting and maps tokens (English labels such as None, Light, Heavy, Very Heavy, Clear, Mist, Thick Fog, Still, Medium, Strong, …) to existing canvas effects. If parsing fails or the line is not a valid triple, behaviour falls back to the legacy keyword matcher. Confirm the exact setting key in your Weather Control build if auto-apply does not trigger.
+
+**Wind and particle motion:** the third field scales **`speed`** on **fog** and **cloud** FXMaster layers for that application (e.g. `Heavy; Thick Fog; Medium` moves fog/cloud faster than with **Still**). Presets in `effect.js` are cloned first so only the active scene run is modified. Approximate multipliers:
+
+| Wind (normalized) | Speed multiplier (fog / clouds) |
+| ----------------- | ------------------------------- |
+| Still / calm      | ×0.45                           |
+| Light             | ×0.85                           |
+| Medium            | ×1.15                           |
+| Strong            | ×1.55                           |
+| Very strong       | ×2.0                            |
+
+Rain and snow particle speeds are unchanged in this pass.
+
+**Clear + calm wind:** when precipitation is **none-like**, visibility includes **Clear**, and wind is **Still** or **Light**, Weather FX uses sparse **scattered clouds** (`scatteredClearSky` preset, lower cloud density than `partlyCloudy`) instead of a fully empty sky. **Medium** or stronger wind with clear skies still uses the denser `partlyCloudy` clouds as before.
+
 ## Functions
 With the buttons added to the controls on the right side of the screen the GM can either remove or apply Weather FX.
 

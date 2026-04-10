@@ -25,6 +25,35 @@ export function removeTemperature(string){
     return string.replace(/.+(?<= - )/ig, '');
 }
 
+/**
+ * Plain text after " - " (temperature prefix stripped). Used when Weather Control
+ * emits DSLF / non-legacy lines: "<b>20 °C</b> - None; Clear; Light".
+ */
+export function extractWeatherControlPayloadAfterTemp(htmlOrText) {
+    if (htmlOrText == null || htmlOrText === '') return '';
+    let plain = removeTags(htmlOrText.toString());
+    if (plain === false || plain === '') return '';
+    const idx = plain.indexOf(' - ');
+    if (idx === -1) return plain.trim();
+    return plain.slice(idx + 3).trim();
+}
+
+/**
+ * Parse non-legacy triple: Precipitation; Visibility; Wind (English tokens).
+ * Returns null if the string does not match.
+ */
+export function extractDslfTripleFromMessage(htmlOrText) {
+    const rest = extractWeatherControlPayloadAfterTemp(htmlOrText);
+    if (!rest) return null;
+    const parts = rest.split(';').map((p) => p.trim()).filter(Boolean);
+    if (parts.length < 3) return null;
+    return {
+        precipitation: parts[0].toLowerCase(),
+        visibility: parts[1].toLowerCase(),
+        wind: parts[2].toLowerCase(),
+    };
+}
+
 export function getTemp(string) { //function to get the temperature from the message string, currently not been used.
     let input = ''
     for (var i = 0; i < string.length; i++) {

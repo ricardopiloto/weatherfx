@@ -1,8 +1,8 @@
 import { MODULE, i18nTodaysWeather } from "./const.js";
-import { removeTemperature, getKeyByVal } from "./util.js"
+import { removeTemperature, getKeyByVal, extractDslfTripleFromMessage, extractWeatherControlPayloadAfterTemp } from "./util.js"
 import { toggleApp, weatherSource, autoApply, linkWeatherToGI } from "./settings.js"
 import { lang, fvttVersion, weatherEffects } from "./weatherfx.js";
-import { createEffect } from "./effect.js"
+import { createEffect, Effect } from "./effect.js"
 
 export async function weatherControlHooks() {
     if (game.modules.get('weather-control').active) {
@@ -25,11 +25,15 @@ export async function weatherControlHooks() {
                 if (fvttVersion < 10) //compatibility with v9
                     message = message.data
                 if (message.speaker.alias == todaysWeather) {
-                    let precipitation = removeTemperature(message.content)
-                    await game.settings.set(MODULE, "currentWeather", precipitation);
+                    const legacyEiS = game.settings.get("weather-control", "legacyEnemyInShadowsWeather");
+                    const payloadForStore =
+                        legacyEiS === false
+                            ? extractWeatherControlPayloadAfterTemp(message.content) || removeTemperature(message.content) || ""
+                            : removeTemperature(message.content);
+                    await game.settings.set(MODULE, "currentWeather", payloadForStore);
                     const shouldApplyForScene = !linkWeatherToGI || !!canvas.scene?.globalLight;
                     if (shouldApplyForScene && autoApply && sceneAutoApply) {
-                        checkWeather(precipitation)
+                        checkWeather(message.content);
                     }
                 }
             }
@@ -97,9 +101,141 @@ export async function langJson(language = lang) {
     return json;
 }
 
+function isWeatherControlDslfMode() {
+    return (
+        weatherSource === "weather-control" &&
+        game.modules.get("weather-control")?.active &&
+        game.settings.get("weather-control", "legacyEnemyInShadowsWeather") === false
+    );
+}
+
+/**
+ * Map DSLF triple (Deft Steps / non-legacy Weather Control) to createEffect id.
+ * Precedence: precipitation (snow/rain intensity) → visibility (fog) → wind (clouds).
+ */
+function dslfTripleToEffectName(triple) {
+    const p = triple.precipitation;
+    const v = triple.visibility;
+    const w = triple.wind;
+
+    if (p.includes("blizzard")) return "blizzard";
+    if (p.includes("snow")) {
+        if (p.includes("heavy") || p.includes("large") || p.includes("very")) return "moderateSnow";
+        return "lightSnow";
+    }
+    if (p.includes("very heavy") || p.includes("torrential") || p.includes("downpour")) return "thunderstorm";
+    if (p.includes("heavy") && !p.includes("snow")) return "heavyRain";
+    if (p === "light" || p.includes("drizzle") || (p.includes("light") && p.includes("rain"))) return "lightRain";
+    if (p.includes("moderate")) return "moderateRain";
+    if (p.includes("rain")) return "moderateRain";
+
+    const noneLike =
+        p === "none" ||
+        p === "nil" ||
+        p === "—" ||
+        p === "-" ||
+        p.trim().length === 0;
+
+    if (noneLike) {
+        if (v.includes("thick")) return "mostlyCloudy";
+        if (v.includes("mist") || v.includes("fog")) return "fair";
+        if (w.includes("very strong")) return "partlyCloudy";
+        if (w.includes("strong")) return "partlyCloudy";
+        if (w.includes("medium")) return "partlyCloudy";
+        if (v.includes("clear")) {
+            const windTier = normalizeDslfWindToken(w);
+            if (windTier === "still" || windTier === "light") return "scatteredClearSky";
+        }
+        return "clear";
+    }
+
+    return null;
+}
+
+/**
+ * Normalize Weather Control / DSLF wind token (English) to a tier.
+ * Order matters: "very strong" is matched before "strong"; "light" before substring noise.
+ */
+function normalizeDslfWindToken(windRaw) {
+    const s = (windRaw || "").toLowerCase().trim();
+    if (!s) return "medium";
+    if (s.includes("very") && s.includes("strong")) return "very strong";
+    if (s.includes("strong")) return "strong";
+    if (s.includes("medium")) return "medium";
+    if (s.includes("light")) return "light";
+    if (s.includes("still") || s.includes("calm")) return "still";
+    return "medium";
+}
+
+/** Multiplier applied to fog/cloud particle `options.speed` (DSLF wind). */
+function dslfWindTierSpeedMultiplier(tier) {
+    switch (tier) {
+        case "still":
+            return 0.45;
+        case "light":
+            return 0.85;
+        case "medium":
+            return 1.15;
+        case "strong":
+            return 1.55;
+        case "very strong":
+            return 2.0;
+        default:
+            return 1.0;
+    }
+}
+
+function duplicateForParticles(obj) {
+    if (typeof foundry !== "undefined" && foundry.utils?.duplicate)
+        return foundry.utils.duplicate(obj);
+    return JSON.parse(JSON.stringify(obj));
+}
+
+/**
+ * Clone effect condition and scale fog/cloud speeds by DSLF wind (does not mutate effect.js presets).
+ */
+function applyDslfWindToEffectCondition(condition, windRaw) {
+    const tier = normalizeDslfWindToken(windRaw);
+    const mult = dslfWindTierSpeedMultiplier(tier);
+    const minSp = 0.12;
+    const maxSp = 4.5;
+    const newEffects = (condition.effectsArray || []).map((p) => {
+        const layer = duplicateForParticles(p);
+        if (layer?.type !== "fog" && layer?.type !== "clouds") return layer;
+        if (layer.options && typeof layer.options.speed === "number") {
+            layer.options.speed = Math.min(maxSp, Math.max(minSp, layer.options.speed * mult));
+        }
+        return layer;
+    });
+    const filters = condition.filtersArray?.length
+        ? duplicateForParticles(condition.filtersArray)
+        : [];
+    return new Effect(
+        condition.name,
+        condition.id,
+        condition.hasSound,
+        condition.sound,
+        condition.soundName,
+        newEffects,
+        filters
+    );
+}
+
 // checks the string for which weather was generated, create the effect and passes it as argument for Weather Effects function.
 export async function checkWeather(msgString) {
     const raw = msgString != null && typeof msgString === "string" ? msgString : String(msgString ?? "");
+
+    if (isWeatherControlDslfMode()) {
+        const triple = extractDslfTripleFromMessage(raw);
+        if (triple) {
+            const effectName = dslfTripleToEffectName(triple);
+            if (effectName) {
+                const base = createEffect(effectName);
+                const withWind = applyDslfWindToEffectCondition(base, triple.wind);
+                return weatherEffects(withWind);
+            }
+        }
+    }
 
     if (weatherSource === 'weather-control') {
         let weatherObject = await langJson();
