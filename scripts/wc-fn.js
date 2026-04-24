@@ -1,40 +1,36 @@
 import { MODULE, i18nTodaysWeather } from "./const.js";
 import { removeTemperature, getKeyByVal, extractDslfTripleFromMessage, extractWeatherControlPayloadAfterTemp } from "./util.js"
-import { toggleApp, weatherSource, autoApply, linkWeatherToGI } from "./settings.js"
+import { toggleApp, autoApply, linkWeatherToGI } from "./settings.js"
 import { lang, fvttVersion, weatherEffects } from "./weatherfx.js";
 import { createEffect, Effect } from "./effect.js"
 
 export async function weatherControlHooks() {
     if (game.modules.get('weather-control').active) {
         Hooks.on('renderT', async function (app, html, data) {
-            if (weatherSource === 'weather-control') {
-                if (!isChatOutputOn()) {
-                    noChatOutputDialog();
-                }
-                if (!game.settings.get("weatherfx", "currentWeather"))
-                    await getPrecipitation();
+            if (!isChatOutputOn()) {
+                noChatOutputDialog();
             }
+            if (!game.settings.get("weatherfx", "currentWeather"))
+                await getPrecipitation();
         })
 
         // Hook on every created message, if this is a message created with the alias "Today's Weather", then trigger the Weather FX part. 
         Hooks.on('createChatMessage', async function (message) {
-            if (weatherSource === 'weather-control') {
-                let todaysWeather = await langJson()
-                todaysWeather = todaysWeather[i18nTodaysWeather]
-                let sceneAutoApply = game.scenes.viewed.getFlag('weatherfx', 'auto-apply') ? true : false;
-                if (fvttVersion < 10) //compatibility with v9
-                    message = message.data
-                if (message.speaker.alias == todaysWeather) {
-                    const legacyEiS = game.settings.get("weather-control", "legacyEnemyInShadowsWeather");
-                    const payloadForStore =
-                        legacyEiS === false
-                            ? extractWeatherControlPayloadAfterTemp(message.content) || removeTemperature(message.content) || ""
-                            : removeTemperature(message.content);
-                    await game.settings.set(MODULE, "currentWeather", payloadForStore);
-                    const shouldApplyForScene = !linkWeatherToGI || !!canvas.scene?.globalLight;
-                    if (shouldApplyForScene && autoApply && sceneAutoApply) {
-                        checkWeather(message.content);
-                    }
+            let todaysWeather = await langJson()
+            todaysWeather = todaysWeather[i18nTodaysWeather]
+            let sceneAutoApply = game.scenes.viewed.getFlag('weatherfx', 'auto-apply') ? true : false;
+            if (fvttVersion < 10) //compatibility with v9
+                message = message.data
+            if (message.speaker.alias == todaysWeather) {
+                const legacyEiS = game.settings.get("weather-control", "legacyEnemyInShadowsWeather");
+                const payloadForStore =
+                    legacyEiS === false
+                        ? extractWeatherControlPayloadAfterTemp(message.content) || removeTemperature(message.content) || ""
+                        : removeTemperature(message.content);
+                await game.settings.set(MODULE, "currentWeather", payloadForStore);
+                const shouldApplyForScene = !linkWeatherToGI || !!canvas.scene?.globalLight;
+                if (shouldApplyForScene && autoApply && sceneAutoApply) {
+                    checkWeather(message.content);
                 }
             }
         });
@@ -103,7 +99,6 @@ export async function langJson(language = lang) {
 
 function isWeatherControlDslfMode() {
     return (
-        weatherSource === "weather-control" &&
         game.modules.get("weather-control")?.active &&
         game.settings.get("weather-control", "legacyEnemyInShadowsWeather") === false
     );
@@ -237,15 +232,11 @@ export async function checkWeather(msgString) {
         }
     }
 
-    if (weatherSource === 'weather-control') {
-        let weatherObject = await langJson();
-        let comparableString = await getKeyByVal(weatherObject, raw);
-        let enJson = await langJson("en");
-        const enValue = comparableString != null ? enJson[comparableString] : undefined;
-        msgString = (typeof enValue === "string" ? enValue : raw).toLowerCase();
-    } else {
-        msgString = raw.toLowerCase();
-    }
+    const weatherObject = await langJson();
+    const comparableString = await getKeyByVal(weatherObject, raw);
+    const enJson = await langJson("en");
+    const enValue = comparableString != null ? enJson[comparableString] : undefined;
+    msgString = (typeof enValue === "string" ? enValue : raw).toLowerCase();
 
     if (msgString.includes('rain')) {
         if (msgString.includes('heavy') || msgString.includes('monsoon')) {

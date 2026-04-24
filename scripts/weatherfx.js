@@ -1,11 +1,9 @@
 import { MODULE, playlistName } from "./const.js";
-import { getKeyByVal } from "./util.js"
-import { registerSettings, cacheSettings, enableSound, autoApply, instantApply, linkWeatherToGI, enableHB, blizzardSound, rainSound, heavyRainSound, thunderstormSound, weatherSource, currentWeather } from "./settings.js"; //import settings variables and function that register those settings.
+import { registerSettings, cacheSettings, enableSound, autoApply, instantApply, linkWeatherToGI, enableHB, blizzardSound, rainSound, heavyRainSound, thunderstormSound } from "./settings.js"; //import settings variables and function that register those settings.
 import { createEffect } from "./effect.js"; //import function that create the effects
 import { generatePlaylist, addSound } from "./playlist.js"
 import { firstTime } from "./patchPlaylist.js";
 import { weatherRoll } from "./weather-conditions.js"
-import { smallWeatherString } from "./sw-fn.js"
 import { getPrecipitation, toggleWeatherControl, isChatOutputOn, noChatOutputDialog, weatherControlHooks, checkWeather } from "./wc-fn.js"
 
 let dnd5e = false
@@ -87,15 +85,6 @@ Hooks.on('renderSceneConfig', async (app, html) => {
     if (typeof app.setPosition === 'function') app.setPosition({ height: "auto" });
 })
 
-Hooks.on('smallweatherUpdate', async function (weather, hourly) {
-    // await game.settings.set(MODULE, "currentWeather", currentWeather)
-    // cacheSettings();
-    let sceneAutoApply = game.scenes.viewed.getFlag('weatherfx', 'auto-apply') ? true : false;
-    if (!linkWeatherToGI || canvas.scene.globalLight)
-        if (autoApply && sceneAutoApply) await smallWeatherString(weather, hourly)
-    await game.settings.set(MODULE, 'currentWeather', weather)
-})
-
 // This add the control buttons so GM can control 'clear weather effects' or 'apply weather effects'
 // Foundry v13+: controls is a Record (e.g. controls.tokens), tools is a Record; use onChange, not onClick.
 Hooks.on("getSceneControlButtons", (controls) => {
@@ -111,10 +100,7 @@ Hooks.on("getSceneControlButtons", (controls) => {
         visible: game.user.isGM,
         onChange: () => {
             clearEffects();
-            if (weatherSource === 'smallweather')
-                ChatMessage.create({ speaker: { alias: 'Weather FX: ' }, content: "Weather effects for: " + game.settings.get("weatherfx", "currentWeather").conditions + " <b style='color:red'>removed</b>", whisper: ChatMessage.getWhisperRecipients("GM") });
-            else
-                ChatMessage.create({ speaker: { alias: 'Weather FX: ' }, content: "Weather effects for: " + game.settings.get("weatherfx", "currentWeather") + " <b style='color:red'>removed</b>", whisper: ChatMessage.getWhisperRecipients("GM") });
+            ChatMessage.create({ speaker: { alias: 'Weather FX: ' }, content: "Weather effects for: " + game.settings.get("weatherfx", "currentWeather") + " <b style='color:red'>removed</b>", whisper: ChatMessage.getWhisperRecipients("GM") });
         },
     };
     tokenControl.tools.applyWeatherFX = {
@@ -125,15 +111,13 @@ Hooks.on("getSceneControlButtons", (controls) => {
         button: true,
         visible: game.user.isGM,
         onChange: async () => {
-            if (weatherSource === 'weather-control' && game.modules.get('weather-control').active) {
+            if (game.modules.get('weather-control')?.active) {
                 if (!game.settings.get("weatherfx", "currentWeather"))
                     await getPrecipitation();
                 if (isChatOutputOn()) {
-                    let currentWeather = game.settings.get("weatherfx", "currentWeather");
-                    checkWeather(currentWeather);
+                    const cw = game.settings.get("weatherfx", "currentWeather");
+                    checkWeather(cw);
                 } else noChatOutputDialog();
-            } else if (weatherSource === 'smallweather' && game.modules.get('smallweather').active) {
-                await smallWeatherString(currentWeather);
             }
         },
     };

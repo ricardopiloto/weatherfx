@@ -1,5 +1,9 @@
 # Changelog
 
+## [Unreleased]
+
+- **Repository cleanup:** Removed the unused Jekyll/Gemfile site scaffold, `TODO.md`, and empty `scripts`/`styles` entries from `module.json`. Removed **SmallWeather** support (`sw-fn.js`, `smallweatherUpdate` hook) and the **Weather Source** / **Larger Cloud Shadows** settings so the fork matches **Weather Control**–only use documented in the README. **OpenSpec** files were not removed.
+
 ## [2.0.0] — Fork updates (OpenSpec changes)
 
 This release reflects the fork updated for Foundry v13, FXMaster (gambit07/fxmaster), and the latest Weather Control. The following changes were implemented and tracked via OpenSpec.
@@ -7,7 +11,7 @@ This release reflects the fork updated for Foundry v13, FXMaster (gambit07/fxmas
 ### Compatibility and dependencies
 - **update-foundry-v13-compat:** Updated module for Foundry VTT v13 API; manifest and runtime code aligned with v13 compatibility; scene flags and version detection updated.
 - **update-fxmaster-dependency:** Declared and validated compatibility with latest FXMaster ([gambit07/fxmaster](https://github.com/gambit07/fxmaster)); manifest and FXMaster API usage audited and updated.
-- **update-fxmaster-rain-type:** Replaced deprecated `raintop` particle type with `rain` and appropriate options across `effect.js` and `sw-fn.js` so rain effects render correctly with current FXMaster.
+- **update-fxmaster-rain-type:** Replaced deprecated `raintop` particle type with `rain` and appropriate options in `effect.js` (and previously `sw-fn.js` when SmallWeather was supported) so rain effects render correctly with current FXMaster.
 - **adapt-scene-controls-foundry-v13:** Adapted scene controls to Foundry v13 `getSceneControlButtons` API (Record-based controls and tools); "Clear Weather", "Apply Weather FX", and "Toggle Weather Control" buttons now register and appear correctly for GMs.
 - **fix-weatherfx-controls-and-linkweather:** Fixed `linkWeatherToGI is not defined` runtime error and restored reliable visibility of Weather FX buttons when required modules are present.
 

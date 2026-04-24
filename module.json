@@ -25,17 +25,20 @@
           "minimum": "7.4.1",
           "verified": "7.4.2"
         }
+      },
+      {
+        "id": "weather-control",
+        "type": "module",
+        "manifest": "https://github.com/ricardopiloto/weather-control/releases/latest/download/module.json",
+        "compatibility": {
+          "minimum": "4.0.0",
+          "verified": "4.3.4"
+        }
       }
     ]
   },
   "esmodules": [
     "scripts/weatherfx.js"
-  ],
-  "scripts": [
-    "scripts/lib/lib.js"
-  ],
-  "styles": [
-    "styles/module.css"
   ],
   "languages": [
     {

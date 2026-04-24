@@ -9,10 +9,7 @@ export let debug = false
 
 export let topDownRain = true
 export let instantApply = false
-export let setCloudShadows = false
 export let linkWeatherToGI = false
-
-export let weatherSource = 'weather-control'
 
 export let blizzardSound = 'modules/michaelghelfi/ambience/Snowing.ogg';
 export let rainSound = 'modules/wfrp4e-night-of-blood/assets/audio/rain.mp3';
@@ -20,26 +17,6 @@ export let thunderstormSound  = 'modules/michaelghelfi/ambience/RainandThunder.o
 export let heavyRainSound = 'modules/wfrp4e-night-of-blood/assets/audio/rain.mp3';
 
 export function registerSettings() {
-    game.settings.register(MODULE, 'weatherSource', {
-        name: 'Weather Source',
-        hint: 'Choose which module should Weather FX watch in order to generate screen effects.',
-        scope: 'world',
-        config: true,
-        type: String,
-        choices: {
-            "smallweather": "SmallWeather",
-            "weather-control": "Weather Control"
-        },
-        default: weatherSource,
-        restricted: true,
-        onChange: () => {
-            let thisSetting = game.settings.get(MODULE, 'weatherSource');
-            if (game.modules.get(thisSetting).active)
-            cacheSettings(); //preciso arrumar aqui pra mostrar um dialogo para o usuario quando ele escolhe um modulo que nao esta ativo, mas agora nao da tempo.
-            // else alert ('you must activate', thisSetting)
-        },
-    });
-
     game.settings.register(MODULE, 'autoApply', {
         name: 'Automatic Apply',
         hint: `Check this option if you would like to have weather effects automatic applied to the current scene.`,
@@ -68,24 +45,11 @@ export function registerSettings() {
 
     game.settings.register(MODULE, 'topDownRain', {
         name: 'Top-Down Rain',
-        hint: `Check this option if you would like to use top-down rain, otherwise the module will apply Foundry's default rain effect. This works only with smallweather at the momemnt.`,
+        hint: `Check for top-down rain; otherwise the module uses the default oblique rain style when applying rain layer options.`,
         scope: 'world',
         config: true,
         type: Boolean,
         default: topDownRain,
-        restricted: true,
-        onChange: () => {
-            cacheSettings();
-        },
-    });
-
-    game.settings.register(MODULE, 'setCloudShadows', {
-        name: 'Larger Cloud Shadows',
-        hint: `Check this option if you would like to see cloud shadows instead of the clouds, this setting will apply large cloud shadows to the scene.`,
-        scope: 'world',
-        config: true,
-        type: Boolean,
-        default: setCloudShadows,
         restricted: true,
         onChange: () => {
             cacheSettings();
@@ -242,9 +206,7 @@ export function cacheSettings() {
     thunderstormSound = game.settings.get(MODULE, 'thunderstormSound');
     heavyRainSound = game.settings.get(MODULE, 'heavyRainSound');
     currentWeather = game.settings.get(MODULE, 'currentWeather');
-    weatherSource = game.settings.get(MODULE, 'weatherSource');
     debug = game.settings.get(MODULE, 'debug');
     topDownRain = game.settings.get(MODULE, 'topDownRain');
-    setCloudShadows = game.settings.get(MODULE, 'setCloudShadows');
     linkWeatherToGI = game.settings.get(MODULE, 'linkWeatherToGI');
 }
