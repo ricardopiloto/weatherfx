@@ -131,6 +131,11 @@ const scatteredClouds = {
         }
     }
 }
+
+/** Fresh copy of sparse clouds for DSLF Clear visibility / wind demo (does not share mutable state). */
+export function getScatteredCloudsPreset() {
+    return JSON.parse(JSON.stringify(scatteredClouds));
+}
 const moderateClouds = {
     "type": "clouds",
     "options": {

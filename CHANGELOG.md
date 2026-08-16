@@ -1,7 +1,9 @@
 # Changelog
 
-## [Unreleased]
+## [2.1.0] — 2026-08-16
 
+- **fix-dslf-clear-visibility-fog:** DSLF **Clear** visibility strips **`fog`** layers from precip presets (e.g. `Light; Clear; Strong` is light rain without mist). If no clouds are present, sparse **`scatteredClouds`** are added so wind-tier speed is visible.
+- **update-release-workflow-placeholder-manifest:** `module.json` uses `${version}` / `${url}` / `${manifest}` / `${download}`; release CI (ai-actors model) substitutes them and uploads zip + manifest on GitHub Release publish.
 - **Repository cleanup:** Removed the unused Jekyll/Gemfile site scaffold, `TODO.md`, and empty `scripts`/`styles` entries from `module.json`. Removed **SmallWeather** support (`sw-fn.js`, `smallweatherUpdate` hook) and the **Weather Source** / **Larger Cloud Shadows** settings so the fork matches **Weather Control**–only use documented in the README. **OpenSpec** files were not removed.
 
 ## [2.0.0] — Fork updates (OpenSpec changes)

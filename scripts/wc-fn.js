@@ -2,7 +2,7 @@ import { MODULE, i18nTodaysWeather } from "./const.js";
 import { removeTemperature, getKeyByVal, extractDslfTripleFromMessage, extractWeatherControlPayloadAfterTemp } from "./util.js"
 import { toggleApp, autoApply, linkWeatherToGI } from "./settings.js"
 import { lang, fvttVersion, weatherEffects } from "./weatherfx.js";
-import { createEffect, Effect } from "./effect.js"
+import { createEffect, Effect, getScatteredCloudsPreset } from "./effect.js"
 
 export async function weatherControlHooks() {
     if (game.modules.get('weather-control').active) {
@@ -186,6 +186,39 @@ function duplicateForParticles(obj) {
     return JSON.parse(JSON.stringify(obj));
 }
 
+function isDslfClearVisibility(visibilityRaw) {
+    return (visibilityRaw || "").toLowerCase().includes("clear");
+}
+
+/**
+ * Clear visibility: drop fog layers; ensure sparse clouds so wind speed is visible.
+ * Does not mutate the input condition or shared effect.js presets.
+ */
+function applyDslfClearVisibilityAdjustments(condition, visibilityRaw) {
+    if (!isDslfClearVisibility(visibilityRaw)) return condition;
+
+    let layers = (condition.effectsArray || [])
+        .map((p) => duplicateForParticles(p))
+        .filter((p) => p?.type !== "fog");
+
+    if (!layers.some((p) => p?.type === "clouds")) {
+        layers.push(getScatteredCloudsPreset());
+    }
+
+    const filters = condition.filtersArray?.length
+        ? duplicateForParticles(condition.filtersArray)
+        : [];
+    return new Effect(
+        condition.name,
+        condition.id,
+        condition.hasSound,
+        condition.sound,
+        condition.soundName,
+        layers,
+        filters
+    );
+}
+
 /**
  * Clone effect condition and scale fog/cloud speeds by DSLF wind (does not mutate effect.js presets).
  */
@@ -226,7 +259,8 @@ export async function checkWeather(msgString) {
             const effectName = dslfTripleToEffectName(triple);
             if (effectName) {
                 const base = createEffect(effectName);
-                const withWind = applyDslfWindToEffectCondition(base, triple.wind);
+                const clearAdjusted = applyDslfClearVisibilityAdjustments(base, triple.visibility);
+                const withWind = applyDslfWindToEffectCondition(clearAdjusted, triple.wind);
                 return weatherEffects(withWind);
             }
         }
